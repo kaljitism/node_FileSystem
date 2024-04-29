@@ -6,6 +6,14 @@ const fs = require('fs/promises');
 
   commandFileHandler.on("change", changeHandler(commandFileHandler))
 
+  // watcher...
+  const watcher = await fs.watch("./command.txt")
+  for await (const event of watcher) {
+    if (event.eventType === 'change') {
+      commandFileHandler.emit("change")
+    }
+  }
+
   function changeHandler(commandFileHandler) {
     return (async () => {
       // Commands
@@ -28,39 +36,75 @@ const fs = require('fs/promises');
       // Decoder
       const command = buffer.toString('utf8')
 
-      // File Creation
+      // Creating file
       // create-file <path>
       if (command.includes(CREATE_FILE)) {
-        const filePath = command.substring(CREATE_FILE.length + 1)
-        createFile(filePath)
+        const filePath = command.substring(CREATE_FILE.length).split(" ")
+        await createFile(filePath)
       }
+
+      // Deleting file
+      if (command.includes(DELETE_FILE)) {
+        const filePath = command.substring(DELETE_FILE.length).split(" ")
+        await deleteFile(filePath)
+      }
+
+      // Renaming file
+      if (command.includes(RENAME_FILE)) {
+        const [oldPath, newPath] = command.substring(RENAME_FILE.length).split(" ")
+        await fs.rename(oldPath, newPath)
+      }
+
+      // Copying File
+      if (command.includes(COPY_FILE)) {
+        const [oldPath, newPath] = command.substring(COPY_FILE.length).split(" ")
+        await fs.copyFile(oldPath, newPath)
+      }
+
+      // Moving File
+      if (command.includes(MOVE_FILE)) {
+        const [oldPath, newPath] = command.substring(MOVE_FILE.length).split(" ")
+        await fs.rename(oldPath, newPath)
+      }
+
     })
 
   }
 
   async function createFile(filePath) {
-    let existingFileHandle;
-
     try {
+
       // if runs smoothly, then we already have the file
-      existingFileHandle = await fs.open(filePath, 'r')
+      const existingFileHandle = await fs.open(filePath, 'r')
+      if (existingFileHandle) await existingFileHandle.close()
+
       return console.log(`File ${filePath} exists`)
     } catch (e) {
+
       // we don't have the file
       const newFileHandle = await fs.open(filePath, 'w')
-      console.log(`File ${filePath} created`)
-    }
-    existingFileHandle.close()
-  }
+      console.log(`File ${filePath} successfully created`)
 
-  // watcher...
-  const watcher = await fs.watch("./command.txt")
-  for await (const event of watcher) {
-    if (event.eventType === 'change') {
-      commandFileHandler.emit("change")
+      await newFileHandle.close()
     }
   }
 
+  async function deleteFile(filePath) {
+    try {
+
+      // if file exists, it will be deleted
+      const existingFileHandle = await fs.open(filePath, 'w')
+      await fs.unlink(filePath)
+      await existingFileHandle.close()
+
+      return console.log(`File ${filePath} successfully deleted`)
+
+    } catch (e) {
+
+      // file does not exist
+      console.log(`File ${filePath} not exists`)
+    }
+  }
 }) ()
 
 
