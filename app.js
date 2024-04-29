@@ -48,6 +48,7 @@ const fs = require('fs/promises');
       if (command.includes(CREATE_FILE)) {
         const filePath = command.split(" ")[primaryPathIndex]
         await createFile(filePath)
+        console.log('-------')
       }
 
       // Deleting file
@@ -55,6 +56,7 @@ const fs = require('fs/promises');
       if (command.includes(DELETE_FILE)) {
         const filePath = command.split(" ")[primaryPathIndex]
         await deleteFile(filePath)
+        console.log('-------')
       }
 
       // Renaming file
@@ -62,6 +64,7 @@ const fs = require('fs/promises');
       if (command.includes(RENAME_FILE)) {
         const [oldPath, newPath] = [command.split(" ")[primaryPathIndex], command.split(" ")[newPathIndex]]
         await renameFile(oldPath, newPath)
+        console.log('-------')
       }
 
       // Copying File
@@ -69,6 +72,7 @@ const fs = require('fs/promises');
       if (command.includes(COPY_FILE)) {
         const [oldPath, newPath] = [command.split(" ")[primaryPathIndex], command.split(" ")[newPathIndex]]
         await copyFile(oldPath, newPath)
+        console.log('-------')
       }
 
       // Moving File
@@ -76,6 +80,7 @@ const fs = require('fs/promises');
       if (command.includes(MOVE_FILE)) {
         const [oldPath, newPath] = [command.split(" ")[primaryPathIndex], command.split(" ")[newPathIndex]]
         await moveFile(oldPath, newPath)
+        console.log('-------')
       }
 
       // Writing in File
@@ -83,8 +88,8 @@ const fs = require('fs/promises');
         const filePath = command.split(" ")[primaryPathIndex]
         const content = command.split(" ").slice(newPathIndex).toString()
         await writeInFile(filePath, content)
+        console.log('-------')
       }
-      console.log('-------')
     })
 
   }
@@ -178,7 +183,7 @@ const fs = require('fs/promises');
     try {
 
       // if file exists, it will be renamed
-      const existingFileHandle = await fs.open(path, 'w')
+      const existingFileHandle = await fs.open(path, 'a')
       await fs.writeFile(path, content)
       await existingFileHandle.close()
       console.log(`Content successfully written to ${path}`)
