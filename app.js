@@ -25,6 +25,7 @@ const fs = require('fs/promises');
       const RENAME_FILE = "rename-file"
       const COPY_FILE = "copy-file"
       const MOVE_FILE = "move-file"
+      const WRITE_IN_FILE = "write"
 
       // File properties and settings
       const size = (await commandFileHandler.stat()).size
@@ -77,6 +78,12 @@ const fs = require('fs/promises');
         await moveFile(oldPath, newPath)
       }
 
+      // Writing in File
+      if (command.includes(WRITE_IN_FILE)) {
+        const filePath = command.split(" ")[primaryPathIndex]
+        const content = command.split(" ").slice(newPathIndex).toString()
+        await writeInFile(filePath, content)
+      }
       console.log('-------')
     })
 
@@ -166,9 +173,20 @@ const fs = require('fs/promises');
       console.log(`${e}`)
     }
   }
+
+  async function writeInFile(path, content) {
+    try {
+
+      // if file exists, it will be renamed
+      const existingFileHandle = await fs.open(path, 'w')
+      await fs.writeFile(path, content)
+      await existingFileHandle.close()
+      console.log(`Content successfully written to ${path}`)
+
+    } catch (e) {
+
+      // file does not exist
+      console.log(`${e}`)
+    }
+  }
 }) ()
-
-
-
-
-
