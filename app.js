@@ -3,8 +3,10 @@ const fs = require('fs/promises');
 (async() => {
 
   const commandFileHandler = await  fs.open("./command.txt", "r")
+  await commandFileHandler.chmod(0o644)
 
-  commandFileHandler.on("change", changeHandler(commandFileHandler))
+  // Entire Application | TL DR
+  commandFileHandler.on("change", FileManager(commandFileHandler))
 
   // watcher...
   const watcher = await fs.watch("./command.txt")
@@ -14,7 +16,8 @@ const fs = require('fs/promises');
     }
   }
 
-  function changeHandler(commandFileHandler) {
+  function FileManager(commandFileHandler) {
+    console.log("FileManager started...")
     return (async () => {
       // Commands
       const CREATE_FILE = "create-file"
@@ -30,6 +33,9 @@ const fs = require('fs/promises');
       const length = buffer.byteLength;
       const position = 0;
 
+      const primaryPathIndex = 1
+      const newPathIndex = 2
+
       // Filling the file into buffer from beginning(0) to the end(buffer.byteLength).
       await commandFileHandler.read(buffer, offset, length, position)
 
@@ -39,46 +45,50 @@ const fs = require('fs/promises');
       // Creating file
       // create-file <path>
       if (command.includes(CREATE_FILE)) {
-        const filePath = command.substring(CREATE_FILE.length).split(" ")
+        const filePath = command.split(" ")[primaryPathIndex]
         await createFile(filePath)
       }
 
       // Deleting file
+      // delete-file <path>
       if (command.includes(DELETE_FILE)) {
-        const filePath = command.substring(DELETE_FILE.length).split(" ")
+        const filePath = command.split(" ")[primaryPathIndex]
         await deleteFile(filePath)
       }
 
       // Renaming file
+      // rename-file <oldPath> <newPath>
       if (command.includes(RENAME_FILE)) {
-        const [oldPath, newPath] = command.substring(RENAME_FILE.length).split(" ")
-        await fs.rename(oldPath, newPath)
+        const [oldPath, newPath] = [command.split(" ")[primaryPathIndex], command.split(" ")[newPathIndex]]
+        await renameFile(oldPath, newPath)
       }
 
       // Copying File
+      // copy-file <oldPath> <newPath>
       if (command.includes(COPY_FILE)) {
-        const [oldPath, newPath] = command.substring(COPY_FILE.length).split(" ")
-        await fs.copyFile(oldPath, newPath)
+        const [oldPath, newPath] = [command.split(" ")[primaryPathIndex], command.split(" ")[newPathIndex]]
+        await copyFile(oldPath, newPath)
       }
 
       // Moving File
+      // move-file <oldPath> <newPath>
       if (command.includes(MOVE_FILE)) {
-        const [oldPath, newPath] = command.substring(MOVE_FILE.length).split(" ")
-        await fs.rename(oldPath, newPath)
+        const [oldPath, newPath] = [command.split(" ")[primaryPathIndex], command.split(" ")[newPathIndex]]
+        await moveFile(oldPath, newPath)
       }
 
+      console.log('-------')
     })
 
   }
 
   async function createFile(filePath) {
     try {
-
       // if runs smoothly, then we already have the file
       const existingFileHandle = await fs.open(filePath, 'r')
       if (existingFileHandle) await existingFileHandle.close()
 
-      return console.log(`File ${filePath} exists`)
+      console.log(`File ${filePath} exists`)
     } catch (e) {
 
       // we don't have the file
@@ -97,12 +107,63 @@ const fs = require('fs/promises');
       await fs.unlink(filePath)
       await existingFileHandle.close()
 
-      return console.log(`File ${filePath} successfully deleted`)
+      console.log(`File ${filePath} successfully deleted`)
 
     } catch (e) {
 
       // file does not exist
-      console.log(`File ${filePath} not exists`)
+      console.log(`${e}`)
+    }
+  }
+
+  async function renameFile(oldPath, newPath) {
+    try {
+
+      // if file exists, it will be renamed
+      const existingFileHandle = await fs.open(oldPath, 'w')
+      await fs.rename(oldPath, newPath)
+      await existingFileHandle.close()
+
+      console.log(`File ${oldPath} successfully renamed to ${newPath}`)
+
+    } catch (e) {
+
+      // file does not exist
+      console.log(`${e}`)
+    }
+  }
+
+  async function copyFile(oldPath, newPath) {
+    try {
+
+      // if file exists, it will be renamed
+      const existingFileHandle = await fs.open(oldPath, 'w')
+      await fs.copyFile(oldPath, newPath)
+      await existingFileHandle.close()
+
+      console.log(`File ${oldPath} successfully copied as ${newPath}`)
+
+    } catch (e) {
+
+      // file does not exist
+      console.log(`${e}`)
+    }
+  }
+
+  async function moveFile(oldPath, newPath) {
+    try {
+
+      // if file exists, it will be renamed
+      const existingFileHandle = await fs.open(oldPath, 'w')
+      await fs.rename(oldPath, newPath)
+      await fs.unlink(oldPath)
+      await existingFileHandle.close()
+      console.log(`File ${oldPath} successfully moved as ${newPath}`)
+
+    } catch (e) {
+
+      // file does not exist
+      console.log(`${e}`)
     }
   }
 }) ()
