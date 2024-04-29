@@ -1,0 +1,11 @@
+{
+  "name": "node_filesystem",
+  "version": "1.0.0",
+  "description": "To install dependencies:",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
